@@ -1,0 +1,84 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+    function isAdmin() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function isSupervisor() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'supervisor';
+    }
+    function isStudent() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
+    }
+
+    match /users/{uid} {
+      allow read: if isAuthenticated() && (isOwner(uid) || isAdmin());
+      allow write: if isAuthenticated() && (isOwner(uid) || isAdmin());
+      allow create: if isAuthenticated();
+    }
+
+    match /studentProfiles/{uid} {
+      allow read: if isAuthenticated() && (isOwner(uid) || isSupervisor() || isAdmin());
+      allow write: if isAuthenticated() && isOwner(uid) && isStudent();
+    }
+
+    match /groups/{groupId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isStudent();
+      allow update: if isAuthenticated();
+    }
+
+    match /projects/{projectId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (isSupervisor() || isAdmin());
+      allow update: if isAuthenticated() && (isSupervisor() || isAdmin());
+    }
+
+    match /lockRequests/{requestId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isStudent();
+      allow update: if isAuthenticated() && (isSupervisor() || isAdmin());
+    }
+
+    match /milestones/{milestoneId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.recipientId == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.recipientId == request.auth.uid;
+    }
+
+    match /systemConfig/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isAdmin();
+    }
+
+    match /savedIdeas/{ideaId} {
+      allow read: if isAuthenticated() && resource.data.studentId == request.auth.uid;
+      allow write: if isAuthenticated() && resource.data.studentId == request.auth.uid;
+      allow create: if isAuthenticated() && isStudent();
+    }
+
+    match /chats/{chatId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+    }
+
+    match /chatMessages/{msgId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /userNotepads/{notepadId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+    }
+  }
+}

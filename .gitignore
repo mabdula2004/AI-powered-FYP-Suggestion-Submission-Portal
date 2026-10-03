@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+.node/
+
+# Production / Build
+dist/
+dist-ssr/
+.netlify/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor & System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Scratch / Temp
+scratch/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
